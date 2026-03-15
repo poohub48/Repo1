@@ -1,0 +1,16 @@
+name: Learn GitHub
+
+on: [push]
+
+jobs:
+  check-bats-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install bats
+        run: sudo apt-get install bats
+      - name: Run a script
+        run: bats -v
