@@ -55,7 +55,7 @@ stages:
 
           - task: AzureWebApp@1
             inputs:
-              azureSubscription: $(pooja1)
+              azureSubscription: 'pooja1'
               appType: 'webApp'
               appName: $(appName)
               package: '$(Pipeline.Workspace)/drop/app.zip'
