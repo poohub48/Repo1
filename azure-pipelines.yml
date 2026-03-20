@@ -1,0 +1,61 @@
+trigger:
+- main
+
+variables:
+  buildConfiguration: 'Release'
+  azureServiceConnection: 'my-service-connection'
+  appName: 'my-webapp'
+
+stages:
+
+# 🔹 Stage 1: Build
+- stage: Build
+  displayName: Build Stage
+  jobs:
+  - job: BuildJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+
+    - task: UseNode@1
+      inputs:
+        version: '18.x'
+
+    - script: |
+        npm install
+        npm run build
+      displayName: Install & Build
+
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/app.zip'
+
+    - publish: '$(Build.ArtifactStagingDirectory)/app.zip'
+      artifact: drop
+
+# 🔹 Stage 2: Deploy
+- stage: Deploy
+  displayName: Deploy Stage
+  dependsOn: Build
+  jobs:
+  - deployment: DeployWeb
+    environment: 'dev'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              appType: 'webApp'
+              appName: $(appName)
+              package: '$(Pipeline.Workspace)/drop/app.zip'
